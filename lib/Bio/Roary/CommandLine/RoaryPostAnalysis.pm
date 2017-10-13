@@ -143,9 +143,15 @@ sub run {
 	  print "Aligning each cluster\n" if($self->verbose);
       
       my $job_runner_to_use = $self->job_runner;
+      my $cpus_to_use = $self->cpus;
       if($self->_is_lsf_job_runner_available && $self->job_runner eq "LSF")
       {
           $job_runner_to_use = $self->job_runner;
+      }
+      elsif($self->_is_slurm_job_runner_available)
+      {
+          $job_runner_to_use = 'Slurm';
+          $cpus_to_use = 400;
       }
       else
       {
@@ -158,7 +164,7 @@ sub run {
         job_runner          => $job_runner_to_use,
         translation_table   => $self->translation_table,
         core_definition     => $self->core_definition,
-        cpus                => $self->cpus,
+        cpus                => $cpus_to_use,
 		verbose             => $self->verbose,
 		mafft               => $self->mafft,
 		allow_paralogs      => $self->allow_paralogs,
@@ -169,6 +175,19 @@ sub run {
     }
 }
 
+sub _is_slurm_job_runner_available
+{
+    my ($self) = @_;
+    my $rc = eval "require Bio::Roary::JobRunner::Slurm; 1;";
+    if(defined($rc) && $rc == 1)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 sub _is_lsf_job_runner_available
 {
     my ($self) = @_;
